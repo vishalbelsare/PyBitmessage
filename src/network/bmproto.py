@@ -67,6 +67,25 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # track port check requests, only allow one per connection
         # completely disable port checks for now
         self.portCheckRequested = True
+        self.payloadLength = 0
+        self.payloadOffset = 0
+        self.invalid = False
+        self.timeOffset = 0
+        self.verackSent = False
+        self.verackReceived = False
+        self.payload = None
+        self.isSSL = False
+        self.remoteProtocolVersion = 0
+        self.nonce = 0
+        self.peerNode = None
+        self.streams = None
+        self.timestamp = 0
+        self.object = None
+        self.services = None
+        self.sockNode = None
+        self.magic = None
+        self.checksum = None
+        self.command = None
 
     def bm_proto_reset(self):
         """Reset the bitmessage object parser"""
@@ -422,7 +441,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkObjectByType()
             objectProcessorQueue.put((
-                self.object.objectType, memoryview(self.object.data)))
+                self.object.objectType, bytes(self.object.data)))
         except BMObjectInvalidError:
             self.stopDownloadingObject(self.object.inventoryHash, True)
         else:
@@ -438,8 +457,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         state.Inventory[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
-            memoryview(self.payload[objectOffset:]), self.object.expiresTime,
-            memoryview(self.object.tag)
+            bytes(self.payload[objectOffset:]), self.object.expiresTime,
+            bytes(self.object.tag)
         )
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)

@@ -7,7 +7,8 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt4 import QtCore
+# pylint: disable=too-many-lines
+from PyQt4 import QtCore  # pylint: disable=import-error
 
 qt_resource_data = "\
 \x00\x00\x03\x66\

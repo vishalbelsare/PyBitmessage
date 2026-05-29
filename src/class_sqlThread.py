@@ -9,6 +9,7 @@ import sys
 import threading
 import time
 
+# pylint: disable=import-error,redefined-builtin
 from six.moves.reprlib import repr
 
 try:
@@ -34,8 +35,12 @@ class sqlThread(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self, name="SQL")
+        self.conn = None
+        self.cur = None
 
-    def run(self):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    # pylint: disable=protected-access,too-many-locals
+    # pylint: disable=too-many-branches,too-many-statements
+    def run(self):
         """Process SQL queries from `.helper_sql.sqlSubmitQueue`"""
         helper_sql.sql_available = True
         config_ready.wait()
@@ -103,8 +108,7 @@ class sqlThread(threading.Thread):
         # usedpersonally field in their pubkeys table. Let's add it.
         if settingsversion == 2:
             item = '''ALTER TABLE pubkeys ADD usedpersonally text DEFAULT 'no' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
+            self.cur.execute(item)
             self.conn.commit()
 
             settingsversion = 3
@@ -114,16 +118,13 @@ class sqlThread(threading.Thread):
         # in the inbox table. Let's add them.
         if settingsversion == 3:
             item = '''ALTER TABLE inbox ADD encodingtype int DEFAULT '2' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
+            self.cur.execute(item)
 
             item = '''ALTER TABLE inbox ADD read bool DEFAULT '1' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
+            self.cur.execute(item)
 
             item = '''ALTER TABLE sent ADD encodingtype int DEFAULT '2' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
+            self.cur.execute(item)
             self.conn.commit()
 
             settingsversion = 4
@@ -139,8 +140,7 @@ class sqlThread(threading.Thread):
         # version we are on can stay embedded in the messages.dat file. Let us
         # check to see if the settings table exists yet.
         item = '''SELECT name FROM sqlite_master WHERE type='table' AND name='settings';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         if self.cur.fetchall() == []:
             # The settings table doesn't exist. We need to make it.
             logger.debug(
@@ -194,8 +194,7 @@ class sqlThread(threading.Thread):
         # Let's get rid of the first20bytesofencryptedmessage field in
         # the inventory table.
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         if int(self.cur.fetchall()[0][0]) == 2:
             logger.debug(
                 'In messages.dat database, removing an obsolete field from'
@@ -222,16 +221,14 @@ class sqlThread(threading.Thread):
 
         # Add a new column to the inventory table to store tags.
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         currentVersion = int(self.cur.fetchall()[0][0])
         if currentVersion == 1 or currentVersion == 3:
             logger.debug(
                 'In messages.dat database, adding tag field to'
                 ' the inventory table.')
             item = '''ALTER TABLE inventory ADD tag blob DEFAULT '' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
+            self.cur.execute(item)
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (4,)
             self.cur.execute(item, parameters)
@@ -239,8 +236,7 @@ class sqlThread(threading.Thread):
         # Add a new column to the pubkeys table to store the address version.
         # We're going to trash all of our pubkeys and let them be redownloaded.
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         currentVersion = int(self.cur.fetchall()[0][0])
         if currentVersion == 4:
             self.cur.execute('''DROP TABLE pubkeys''')
@@ -256,8 +252,7 @@ class sqlThread(threading.Thread):
         # Add a new table: objectprocessorqueue with which to hold objects
         # that have yet to be processed if the user shuts down Bitmessage.
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         currentVersion = int(self.cur.fetchall()[0][0])
         if currentVersion == 5:
             self.cur.execute('''DROP TABLE knownnodes''')
@@ -272,8 +267,7 @@ class sqlThread(threading.Thread):
         # In table inventory and objectprocessorqueue, objecttype is now
         # an integer (it was a human-friendly string previously)
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         currentVersion = int(self.cur.fetchall()[0][0])
         if currentVersion == 6:
             logger.debug(
@@ -298,8 +292,7 @@ class sqlThread(threading.Thread):
         # clear it, and the pubkeys from inventory, so that they'll
         # be re-downloaded.
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         currentVersion = int(self.cur.fetchall()[0][0])
         if currentVersion == 7:
             logger.debug(
@@ -322,16 +315,14 @@ class sqlThread(threading.Thread):
         # the message signature. We'll use this as temporary message UUID
         # in order to detect duplicates.
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         currentVersion = int(self.cur.fetchall()[0][0])
         if currentVersion == 8:
             logger.debug(
                 'In messages.dat database, adding sighash field to'
                 ' the inbox table.')
             item = '''ALTER TABLE inbox ADD sighash blob DEFAULT '' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
+            self.cur.execute(item)
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (9,)
             self.cur.execute(item, parameters)
@@ -340,8 +331,7 @@ class sqlThread(threading.Thread):
         # can combine the pubkeyretrynumber and msgretrynumber into one.
 
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         currentVersion = int(self.cur.fetchall()[0][0])
         if currentVersion == 9:
             logger.info(
@@ -401,8 +391,7 @@ class sqlThread(threading.Thread):
 
         # Update the address colunm to unique in addressbook table
         item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         currentVersion = int(self.cur.fetchall()[0][0])
         if currentVersion == 10:
             logger.debug(
@@ -465,8 +454,7 @@ class sqlThread(threading.Thread):
         # Let us check to see the last time we vaccumed the messages.dat file.
         # If it has been more than a month let's do it now.
         item = '''SELECT value FROM settings WHERE key='lastvacuumtime';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        self.cur.execute(item)
         queryreturn = self.cur.fetchall()
         for row in queryreturn:
             value, = row
@@ -638,5 +626,5 @@ class sqlThread(threading.Thread):
             self.conn.create_function("enaddr", 3, func=encodeAddress, deterministic=True)
         except (TypeError, sqlite3.NotSupportedError) as err:
             logger.debug(
-                "Got error while pass deterministic in sqlite create function {}, Passing 3 params".format(err))
+                "Got error while pass deterministic in sqlite create function %s, Passing 3 params", err)
             self.conn.create_function("enaddr", 3, encodeAddress)

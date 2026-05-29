@@ -1,10 +1,12 @@
+"""
+PyQt4 test for support request dialog
+"""
 # from PyQt4 import QtTest
 
 import sys
 
+from main import TestBase  # pylint: disable=no-name-in-module
 from shared import isAddressInMyAddressBook
-
-from main import TestBase
 
 
 class TestSupport(TestBase):

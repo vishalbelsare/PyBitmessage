@@ -7,7 +7,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 from bmconfigparser import config
 from foldertree import AddressBookCompleter
 from messageview import MessageView
@@ -25,26 +25,45 @@ except AttributeError:
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
 
-    def _translate(context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None):
+    # pylint: disable=unused-argument
+    def _translate(context, text, disambig,
+                   encoding=QtCore.QCoreApplication.CodecForTr, n=None):
         if n is None:
-            return QtGui.QApplication.translate(context, text, disambig, _encoding)
+            return QtGui.QApplication.translate(context,
+                                                text,
+                                                disambig,
+                                                _encoding)
         else:
-            return QtGui.QApplication.translate(context, text, disambig, _encoding, n)
+            return QtGui.QApplication.translate(context,
+                                                text,
+                                                disambig,
+                                                _encoding,
+                                                n)
 except AttributeError:
-    def _translate(context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None):
+    # pylint: disable=unused-argument
+    def _translate(context, text, disambig,
+                   encoding=QtCore.QCoreApplication.CodecForTr, n=None):
         if n is None:
-            return QtGui.QApplication.translate(context, text, disambig)
+            return QtGui.QApplication.translate(context,
+                                                text,
+                                                disambig)
         else:
-            return QtGui.QApplication.translate(context, text, disambig, QtCore.QCoreApplication.CodecForTr, n)
+            return QtGui.QApplication.translate(context,
+                                                text,
+                                                disambig,
+                                                QtCore.QCoreApplication.CodecForTr,
+                                                n)
 
 
 class Ui_MainWindow(object):
+    # pylint: disable=attribute-defined-outside-init
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.resize(885, 580)
         icon = QtGui.QIcon()
         icon.addPixmap(
-            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")),
+            QtGui.QIcon.Normal, QtGui.QIcon.Off
         )
         MainWindow.setWindowIcon(icon)
         MainWindow.setTabShape(QtGui.QTabWidget.Rounded)
@@ -53,7 +72,8 @@ class Ui_MainWindow(object):
         self.gridLayout_10 = QtGui.QGridLayout(self.centralwidget)
         self.gridLayout_10.setObjectName(_fromUtf8("gridLayout_10"))
         self.tabWidget = QtGui.QTabWidget(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tabWidget.sizePolicy().hasHeightForWidth())
@@ -162,7 +182,8 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_3.setCollapsible(1, False)
         self.gridLayout.addWidget(self.horizontalSplitter_3)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/inbox.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/inbox.png")),
+                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.inbox, icon2, _fromUtf8(""))
         self.send = QtGui.QWidget()
         self.send.setObjectName(_fromUtf8("send"))
@@ -184,7 +205,8 @@ class Ui_MainWindow(object):
         item = QtGui.QTableWidgetItem()
         icon3 = QtGui.QIcon()
         icon3.addPixmap(
-            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/addressbook.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/addressbook.png")),
+            QtGui.QIcon.Selected, QtGui.QIcon.Off
         )
         item.setIcon(icon3)
         self.tableWidgetAddressBook.setHorizontalHeaderItem(0, item)
@@ -346,7 +368,8 @@ class Ui_MainWindow(object):
         self.labelHumanFriendlyTTLDescription.setSizePolicy(sizePolicy)
         self.labelHumanFriendlyTTLDescription.setMinimumSize(QtCore.QSize(45, 0))
         self.labelHumanFriendlyTTLDescription.setObjectName(_fromUtf8("labelHumanFriendlyTTLDescription"))
-        self.horizontalLayout_5.addWidget(self.labelHumanFriendlyTTLDescription, 1, QtCore.Qt.AlignLeft)
+        self.horizontalLayout_5.addWidget(self.labelHumanFriendlyTTLDescription,
+                                          1, QtCore.Qt.AlignLeft)
         self.pushButtonClear = QtGui.QPushButton(self.send)
         self.pushButtonClear.setObjectName(_fromUtf8("pushButtonClear"))
         self.horizontalLayout_5.addWidget(self.pushButtonClear, 0, QtCore.Qt.AlignRight)
@@ -368,7 +391,8 @@ class Ui_MainWindow(object):
         self.horizontalSplitter.setCollapsible(1, False)
         self.gridLayout_7.addWidget(self.horizontalSplitter, 0, 0, 1, 1)
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/send.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon4.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/send.png")),
+                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.send, icon4, _fromUtf8(""))
         self.subscriptions = QtGui.QWidget()
         self.subscriptions.setObjectName(_fromUtf8("subscriptions"))
@@ -671,7 +695,6 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.textEditMessage, self.pushButtonAddSubscription)
 
         # Popup menu actions container for the Sent page
-        # pylint: disable=attribute-defined-outside-init
         self.sentContextMenuToolbar = QtGui.QToolBar()
         # Popup menu actions container for chans tree
         self.addressContextMenuToolbar = QtGui.QToolBar()
@@ -719,7 +742,8 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.label.setText(_translate("MainWindow", "To:", None))
         self.tabWidgetSend.setTabText(
-            self.tabWidgetSend.indexOf(self.sendDirect), _translate("MainWindow", "Send ordinary Message", None)
+            self.tabWidgetSend.indexOf(self.sendDirect),
+            _translate("MainWindow", "Send ordinary Message", None)
         )
         self.label_8.setText(_translate("MainWindow", "From:", None))
         self.label_7.setText(_translate("MainWindow", "Subject:", None))
@@ -802,17 +826,7 @@ class Ui_MainWindow(object):
         self.actionRegenerateDeterministicAddresses.setText(
             _translate("MainWindow", "Regenerate deterministic addresses", None)
         )
-        self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
+        self.actionDeleteAllTrashedMessages.setText(
+            _translate("MainWindow", "Delete all trashed messages", None))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
         self.updateNetworkSwitchMenuLabel()
-
-
-if __name__ == "__main__":
-    import sys
-
-    app = QtGui.QApplication(sys.argv)
-    MainWindow = settingsmixin.SMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())

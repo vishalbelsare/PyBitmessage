@@ -1,7 +1,10 @@
 """
 PyQt based UI for bitmessage, the main module
 """
-
+# pylint: disable=import-error,too-many-lines,no-member
+# pylint: disable=too-many-branches,too-many-nested-blocks
+# pylint: disable=too-many-return-statements
+# pylint: disable=too-many-boolean-expressions
 import hashlib
 import locale
 import os
@@ -56,8 +59,7 @@ import sound
 import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
 import helper_sent
 
-from six.moves import iteritems, itervalues, range as xrange
-from six import text_type
+from six import iteritems, itervalues, text_type
 
 try:
     from plugins.plugin import get_plugin, get_plugins
@@ -239,20 +241,20 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
             self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+                         'customContextMenuRequested(const QPoint&)'),
+                         self.on_context_menuInbox)
         self.ui.tableWidgetInboxSubscriptions.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
             self.connect(self.ui.tableWidgetInboxSubscriptions, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+                         'customContextMenuRequested(const QPoint&)'),
+                         self.on_context_menuInbox)
         self.ui.tableWidgetInboxChans.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
             self.connect(self.ui.tableWidgetInboxChans, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+                         'customContextMenuRequested(const QPoint&)'),
+                         self.on_context_menuInbox)
 
     def init_identities_popup_menu(self, connectSignal=True):
         # Popup menu for the Your Identities tab
@@ -291,8 +293,8 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
             self.connect(self.ui.treeWidgetYourIdentities, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuYourIdentities)
+                         'customContextMenuRequested(const QPoint&)'),
+                         self.on_context_menuYourIdentities)
 
         # load all gui.menu plugins with prefix 'address'
         self.menu_plugins = {'address': []}
@@ -410,6 +412,7 @@ class MyForm(settingsmixin.SMainWindow):
                 'customContextMenuRequested(const QPoint&)'),
                 self.on_context_menuSubscriptions)
 
+    # pylint: disable=unused-argument
     def init_sent_popup_menu(self, connectSignal=True):
         # Actions
         self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
@@ -425,9 +428,6 @@ class MyForm(settingsmixin.SMainWindow):
         self.actionSentReply = self.ui.sentContextMenuToolbar.addAction(
             _translate("MainWindow", "Send update"),
             self.on_action_SentReply)
-        # self.popMenuSent = QtGui.QMenu( self )
-        # self.popMenuSent.addAction( self.actionSentClipboard )
-        # self.popMenuSent.addAction( self.actionTrashSentMessage )
 
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
@@ -449,7 +449,6 @@ class MyForm(settingsmixin.SMainWindow):
         if treeWidget.isSortingEnabled():
             treeWidget.setSortingEnabled(False)
 
-        widgets = {}
         i = 0
         while i < treeWidget.topLevelItemCount():
             widget = treeWidget.topLevelItem(i)
@@ -538,8 +537,6 @@ class MyForm(settingsmixin.SMainWindow):
                 toAddress, 'enabled')
             isChan = config.safeGetBoolean(
                 toAddress, 'chan')
-            isMaillinglist = config.safeGetBoolean(
-                toAddress, 'mailinglist')
 
             if treeWidget == self.ui.treeWidgetYourIdentities:
                 if isChan:
@@ -577,7 +574,6 @@ class MyForm(settingsmixin.SMainWindow):
         if treeWidget.isSortingEnabled():
             treeWidget.setSortingEnabled(False)
 
-        widgets = {}
         i = 0
         while i < treeWidget.topLevelItemCount():
             widget = treeWidget.topLevelItem(i)
@@ -652,8 +648,7 @@ class MyForm(settingsmixin.SMainWindow):
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
         for addressInKeysFile in config.addresses():
-            status, addressVersionNumber, streamNumber, hash = decodeAddress(
-                addressInKeysFile)
+            addressVersionNumber = decodeAddress(addressInKeysFile)[1]
             if addressVersionNumber == 1:
                 displayMsg = _translate(
                     "MainWindow",
@@ -768,6 +763,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.unreadCount = 0
 
+        self.currentTrayIconFileName = ""
+        self.actionQuiet = None
+        self.actionShow = None
+        self.tray = None
+
         # Set the icon sizes for the identicons
         identicon_size = 3 * 7
         self.ui.tableWidgetInbox.setIconSize(QtCore.QSize(identicon_size, identicon_size))
@@ -851,7 +851,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.initSettings()
         self.resetNamecoinConnection()
-        self.sqlInit()
+        MyForm.sqlInit()
         self.indicatorInit()
         self.notifierInit()
         self.updateStartOnLogon()
@@ -968,18 +968,6 @@ class MyForm(settingsmixin.SMainWindow):
             'bitmessagesettings', 'showtraynotifications',
             str(not self.actionQuiet.isChecked())
         )
-
-    # application indicator show or hide
-    """# application indicator show or hide
-    def appIndicatorShowBitmessage(self):
-        #if self.actionShow == None:
-        #    return
-        print self.actionShow.isChecked()
-        if not self.actionShow.isChecked():
-            self.hide()
-            #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
-        else:
-            self.appIndicatorShowOrHideWindow()"""
 
     # Show the program window and select inbox tab
     def appIndicatorInbox(self, item=None):
@@ -1127,7 +1115,8 @@ class MyForm(settingsmixin.SMainWindow):
                     if newCount != folderItem.unreadCount:
                         folderItem.setUnreadCount(newCount)
 
-    def addMessageListItem(self, tableWidget, items):
+    @staticmethod
+    def addMessageListItem(tableWidget, items):
         sortingEnabled = tableWidget.isSortingEnabled()
         if sortingEnabled:
             tableWidget.setSortingEnabled(False)
@@ -1137,8 +1126,9 @@ class MyForm(settingsmixin.SMainWindow):
         if sortingEnabled:
             tableWidget.setSortingEnabled(True)
 
+    @staticmethod
     def addMessageListItemSent(
-        self, tableWidget, toAddress, fromAddress, subject,
+        tableWidget, toAddress, fromAddress, subject,
         status, ackdata, lastactiontime
     ):
         acct = accountClass(fromAddress) or BMAccount(fromAddress)
@@ -1211,12 +1201,13 @@ class MyForm(settingsmixin.SMainWindow):
                 str(subject), text_type(acct.subject, 'utf-8', 'replace')),
             MessageList_TimeWidget(
                 statusText, False, lastactiontime, ackdata)]
-        self.addMessageListItem(tableWidget, items)
+        MyForm.addMessageListItem(tableWidget, items)
 
         return acct
 
+    @staticmethod
     def addMessageListItemInbox(
-        self, tableWidget, toAddress, fromAddress, subject,
+        tableWidget, toAddress, fromAddress, subject,
         msgid, received, read
     ):
         if toAddress == str_broadcast_subscribers:
@@ -1238,12 +1229,12 @@ class MyForm(settingsmixin.SMainWindow):
             MessageList_TimeWidget(
                 l10n.formatTimestamp(received), not read, received, msgid)
         ]
-        self.addMessageListItem(tableWidget, items)
+        MyForm.addMessageListItem(tableWidget, items)
 
         return acct
 
-    # Load Sent items from database
     def loadSent(self, tableWidget, account, where="", what=""):
+        """Load Sent items from database"""
         if tableWidget == self.ui.tableWidgetInboxSubscriptions:
             tableWidget.setColumnHidden(0, True)
             tableWidget.setColumnHidden(1, False)
@@ -1261,7 +1252,7 @@ class MyForm(settingsmixin.SMainWindow):
             xAddress, account, "sent", where, what, False)
 
         for row in queryreturn:
-            self.addMessageListItemSent(tableWidget, *row)
+            MyForm.addMessageListItemSent(tableWidget, *row)
 
         tableWidget.horizontalHeader().setSortIndicator(
             3, QtCore.Qt.DescendingOrder)
@@ -1270,11 +1261,11 @@ class MyForm(settingsmixin.SMainWindow):
             _translate("MainWindow", "Sent"))
         tableWidget.setUpdatesEnabled(True)
 
-    # Load messages from database file
     def loadMessagelist(
         self, tableWidget, account, folder="inbox", where="", what="",
         unreadOnly=False
     ):
+        """Load messages from database file"""
         tableWidget.setUpdatesEnabled(False)
         tableWidget.setSortingEnabled(False)
         tableWidget.setRowCount(0)
@@ -1302,7 +1293,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         for row in queryreturn:
             toAddress, fromAddress, subject, _, msgid, received, read = row
-            self.addMessageListItemInbox(
+            MyForm.addMessageListItemInbox(
                 tableWidget, toAddress, fromAddress, subject,
                 msgid, received, read)
 
@@ -1315,8 +1306,8 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget.setUpdatesEnabled(True)
 
     # create application indicator
-    def appIndicatorInit(self, app):
-        self.initTrayIcon("can-icon-24px-red.png", app)
+    def appIndicatorInit(self, _app):
+        self.initTrayIcon("can-icon-24px-red.png", _app)
         traySignal = "activated(QSystemTrayIcon::ActivationReason)"
         QtCore.QObject.connect(self.tray, QtCore.SIGNAL(
             traySignal), self.__icon_activated)
@@ -1379,14 +1370,15 @@ class MyForm(settingsmixin.SMainWindow):
         self.tray.setContextMenu(m)
         self.tray.show()
 
-    # returns the number of unread messages and subscriptions
-    def getUnread(self):
+    @staticmethod
+    def getUnread():
+        """returns the number of unread messages and subscriptions"""
         counters = [0, 0]
 
         queryreturn = sqlQuery('''
         SELECT msgid, toaddress, read FROM inbox where folder='inbox'
         ''')
-        for msgid, toAddress, read in queryreturn:
+        for _, toAddress, read in queryreturn:
 
             if not read:
                 # increment the unread subscriptions if True (1)
@@ -1463,8 +1455,9 @@ class MyForm(settingsmixin.SMainWindow):
 
         self._player(soundFilename)
 
-    # Adapters and converters for QT <-> sqlite
-    def sqlInit(self):
+    @staticmethod
+    def sqlInit():
+        """Adapters and converters for QT <-> sqlite"""
         register_adapter(QtCore.QByteArray, str)
 
     def indicatorInit(self):
@@ -1741,13 +1734,6 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 self._firstrun = False
 
-    def showMigrationWizard(self, level):
-        self.migrationWizardInstance = Ui_MigrationWizard(["a"])
-        if self.migrationWizardInstance.exec_():
-            pass
-        else:
-            pass
-
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.LanguageChange:
             self.ui.retranslateUi(self)
@@ -1837,16 +1823,19 @@ class MyForm(settingsmixin.SMainWindow):
                 "MainWindow", "Connected"))
             self.setTrayIconFile("can-icon-24px-%s.png" % color)
 
-    def initTrayIcon(self, iconFileName, app):
+    def initTrayIcon(self, iconFileName, _app):
         self.currentTrayIconFileName = iconFileName
         self.tray = QtGui.QSystemTrayIcon(
-            self.calcTrayIcon(iconFileName, self.findInboxUnreadCount()), app)
+            MyForm.calcTrayIcon(iconFileName,
+                                self.findInboxUnreadCount()),
+            _app)
 
     def setTrayIconFile(self, iconFileName):
         self.currentTrayIconFileName = iconFileName
         self.drawTrayIcon(iconFileName, self.findInboxUnreadCount())
 
-    def calcTrayIcon(self, iconFileName, inboxUnreadCount):
+    @staticmethod
+    def calcTrayIcon(iconFileName, inboxUnreadCount):
         pixmap = QtGui.QPixmap(":/newPrefix/images/" + iconFileName)
         if inboxUnreadCount > 0:
             # choose font and calculate font parameters
@@ -1879,7 +1868,8 @@ class MyForm(settingsmixin.SMainWindow):
         return QtGui.QIcon(pixmap)
 
     def drawTrayIcon(self, iconFileName, inboxUnreadCount):
-        self.tray.setIcon(self.calcTrayIcon(iconFileName, inboxUnreadCount))
+        self.tray.setIcon(MyForm.calcTrayIcon(iconFileName,
+                                              inboxUnreadCount))
 
     def changedInboxUnread(self, row=None):
         self.drawTrayIcon(
@@ -1931,7 +1921,7 @@ class MyForm(settingsmixin.SMainWindow):
                         sent.item(i, 3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
-        if type(ackdata) is str:
+        if isinstance(ackdata, str):
             ackdata = QtCore.QByteArray(ackdata)
         for sent in (
             self.ui.tableWidgetInbox,
@@ -1942,10 +1932,7 @@ class MyForm(settingsmixin.SMainWindow):
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
             for i in range(sent.rowCount()):
-                toAddress = sent.item(i, 0).data(QtCore.Qt.UserRole)
                 tableAckdata = sent.item(i, 3).data()
-                status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                    toAddress)
                 if ackdata == tableAckdata:
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
@@ -1983,18 +1970,18 @@ class MyForm(settingsmixin.SMainWindow):
                 inbox.removeRow(i)
 
     def newVersionAvailable(self, version):
-        self.notifiedNewVersion = ".".join(str(n) for n in version)
+        notifiedNewVersion = ".".join(str(n) for n in version)
         self.updateStatusBar(_translate(
             "MainWindow",
             "New version of PyBitmessage is available: %1. Download it"
             " from https://github.com/Bitmessage/PyBitmessage/releases/latest"
-        ).arg(self.notifiedNewVersion))
+        ).arg(notifiedNewVersion))
 
     def displayAlert(self, title, text, exitAfterUserClicksOk):
         self.updateStatusBar(text)
         QtGui.QMessageBox.critical(self, title, text, QtGui.QMessageBox.Ok)
         if exitAfterUserClicksOk:
-            os._exit(0)
+            os._exit(0)  # pylint: disable=protected-access
 
     def rerenderMessagelistFromLabels(self):
         for messagelist in (self.ui.tableWidgetInbox,
@@ -2011,12 +1998,16 @@ class MyForm(settingsmixin.SMainWindow):
                 messagelist.item(i, 0).setLabel()
 
     def rerenderAddressBook(self):
-        def addRow(address, label, type):
+        def addRow(address, label, row_type):
             self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = Ui_AddressBookWidgetItemLabel(address, text_type(label, 'utf-8'), type)
-            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = Ui_AddressBookWidgetItemAddress(address, text_type(label, 'utf-8'), type)
-            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+            newItemL = Ui_AddressBookWidgetItemLabel(address,
+                                                     text_type(label, 'utf-8'),
+                                                     row_type)
+            self.ui.tableWidgetAddressBook.setItem(0, 0, newItemL)
+            newItemA = Ui_AddressBookWidgetItemAddress(address,
+                                                       text_type(label, 'utf-8'),
+                                                       row_type)
+            self.ui.tableWidgetAddressBook.setItem(0, 1, newItemA)
 
         oldRows = {}
         for i in range(self.ui.tableWidgetAddressBook.rowCount()):
@@ -2116,7 +2107,7 @@ class MyForm(settingsmixin.SMainWindow):
         too an exact number you are welcome to but I think that it would
         be a better use of time to support message continuation so that
         users can send messages of any length.
-        """
+        """  # pylint: disable=pointless-string-statement
         if len(message) > (2 ** 18 - 500):
             QtGui.QMessageBox.about(
                 self, _translate("MainWindow", "Message too long"),
@@ -2346,7 +2337,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def click_pushButtonLoadFromAddressBook(self):
         self.ui.tabWidget.setCurrentIndex(5)
-        for i in range(4):
+        for _ in range(4):
             time.sleep(0.1)
             self.statusbar.clearMessage()
             time.sleep(0.1)
@@ -2890,7 +2881,7 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.QEventLoop.AllEvents, 1000
         )
         self.saveSettings()
-        for attr, obj in iteritems(self.ui.__dict__):
+        for _, obj in iteritems(self.ui.__dict__):
             if hasattr(obj, "__class__") \
                     and isinstance(obj, settingsmixin.SettingsMixin):
                 saveMethod = getattr(obj, "saveSettings", None)
@@ -2988,8 +2979,9 @@ class MyForm(settingsmixin.SMainWindow):
         # tableWidget.clearSelection() manages to mark the message
         # as read again.
 
-    # Format predefined text on message reply.
-    def quoted_text(self, message):
+    @staticmethod
+    def quoted_text(message):
+        """Format predefined text on message reply."""
         if not config.safeGetBoolean('bitmessagesettings', 'replybelow'):
             return '\n\n------------------------------------------------------\n' + message
 
@@ -3136,7 +3128,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
 
-        quotedText = self.quoted_text(
+        quotedText = MyForm.quoted_text(
             text_type(messageAtCurrentInboxRow, 'utf-8', 'replace'))
         widget['message'].setPlainText(quotedText)
         if acct.subject[0:3] in ('Re:', 'RE:'):
@@ -3201,7 +3193,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.tableWidgetInboxChans,
                 self.ui.tableWidgetInboxSubscriptions
             )
-        elif type(messageLists) not in (list, tuple):
+        elif not isinstance(messageLists, (list, tuple)):
             messageLists = (messageLists,)
         for messageList in messageLists:
             if row is not None:
@@ -3420,14 +3412,14 @@ class MyForm(settingsmixin.SMainWindow):
             )
 
     def on_context_menuAddressBook(self, point):
-        self.popMenuAddressBook = QtGui.QMenu(self)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSend)
-        self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSetSound)
-        self.popMenuAddressBook.addSeparator()
-        self.popMenuAddressBook.addAction(self.actionAddressBookNew)
+        popMenuAddressBook = QtGui.QMenu(self)
+        popMenuAddressBook.addAction(self.actionAddressBookSend)
+        popMenuAddressBook.addAction(self.actionAddressBookClipboard)
+        popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
+        popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
+        popMenuAddressBook.addAction(self.actionAddressBookSetSound)
+        popMenuAddressBook.addSeparator()
+        popMenuAddressBook.addAction(self.actionAddressBookNew)
         normal = True
         selected_items = self.getAddressbookSelectedItems()
         for item in selected_items:
@@ -3436,13 +3428,13 @@ class MyForm(settingsmixin.SMainWindow):
                 break
         if normal:
             # only if all selected addressbook items are normal, allow delete
-            self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
+            popMenuAddressBook.addAction(self.actionAddressBookDelete)
         if len(selected_items) == 1:
             self._contact_selected = selected_items.pop()
-            self.popMenuAddressBook.addSeparator()
+            popMenuAddressBook.addSeparator()
             for plugin in self.menu_plugins['address']:
-                self.popMenuAddressBook.addAction(plugin)
-        self.popMenuAddressBook.exec_(
+                popMenuAddressBook.addAction(plugin)
+        popMenuAddressBook.exec_(
             self.ui.tableWidgetAddressBook.mapToGlobal(point))
 
     # Group of functions for the Subscriptions dialog box
@@ -3499,31 +3491,31 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_context_menuSubscriptions(self, point):
         currentItem = self.getCurrentItem()
-        self.popMenuSubscriptions = QtGui.QMenu(self)
+        popMenuSubscriptions = QtGui.QMenu(self)
         if isinstance(currentItem, Ui_AddressWidget):
-            self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
-            self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
-            self.popMenuSubscriptions.addSeparator()
+            popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
+            popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
+            popMenuSubscriptions.addSeparator()
             if currentItem.isEnabled:
-                self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
+                popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
             else:
-                self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
-            self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
-            self.popMenuSubscriptions.addSeparator()
-            self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
-            self.popMenuSubscriptions.addAction(self.actionsubscriptionsSend)
-            self.popMenuSubscriptions.addSeparator()
+                popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
+            popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
+            popMenuSubscriptions.addSeparator()
+            popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
+            popMenuSubscriptions.addAction(self.actionsubscriptionsSend)
+            popMenuSubscriptions.addSeparator()
 
             self._contact_selected = currentItem
             # preloaded gui.menu plugins with prefix 'address'
             for plugin in self.menu_plugins['address']:
-                self.popMenuSubscriptions.addAction(plugin)
-            self.popMenuSubscriptions.addSeparator()
+                popMenuSubscriptions.addAction(plugin)
+            popMenuSubscriptions.addSeparator()
         if self.getCurrentFolder() != 'sent':
-            self.popMenuSubscriptions.addAction(self.actionMarkAllRead)
-        if self.popMenuSubscriptions.isEmpty():
+            popMenuSubscriptions.addAction(self.actionMarkAllRead)
+        if popMenuSubscriptions.isEmpty():
             return
-        self.popMenuSubscriptions.exec_(
+        popMenuSubscriptions.exec_(
             self.ui.treeWidgetSubscriptions.mapToGlobal(point))
 
     def widgetConvert(self, widget):
@@ -3787,7 +3779,7 @@ class MyForm(settingsmixin.SMainWindow):
     def setAvatar(self, addressAtCurrentRow):
         if not os.path.exists(state.appdata + 'avatars/'):
             os.makedirs(state.appdata + 'avatars/')
-        hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
+        hash_ = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
         extensions = [
             'PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM',
             'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
@@ -3813,8 +3805,8 @@ class MyForm(settingsmixin.SMainWindow):
         for ext in extensions:
             filters += [names[ext] + ' (*.' + ext.lower() + ')']
             all_images_filter += ['*.' + ext.lower()]
-            upper = state.appdata + 'avatars/' + hash + '.' + ext.upper()
-            lower = state.appdata + 'avatars/' + hash + '.' + ext.lower()
+            upper = state.appdata + 'avatars/' + hash_ + '.' + ext.upper()
+            lower = state.appdata + 'avatars/' + hash_ + '.' + ext.lower()
             if os.path.isfile(lower):
                 current_files += [lower]
             elif os.path.isfile(upper):
@@ -3826,7 +3818,8 @@ class MyForm(settingsmixin.SMainWindow):
             filter=';;'.join(filters)
         )
         # determine the correct filename (note that avatars don't use the suffix)
-        destination = state.appdata + 'avatars/' + hash + '.' + sourcefile.split('.')[-1]
+        destination = state.appdata + 'avatars/' + hash_ \
+            + '.' + sourcefile.split('.')[-1]
         exists = QtCore.QFile.exists(destination)
         if sourcefile == '':
             # ask for removal of avatar
@@ -3854,8 +3847,8 @@ class MyForm(settingsmixin.SMainWindow):
         # copy the image file to the appdata folder
         if (not exists) | (overwrite == QtGui.QMessageBox.Yes):
             if overwrite == QtGui.QMessageBox.Yes:
-                for file in current_files:
-                    QtCore.QFile.remove(file)
+                for _ in current_files:
+                    QtCore.QFile.remove(_)
                 QtCore.QFile.remove(destination)
             # copy it
             if sourcefile != '':
@@ -3922,60 +3915,60 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_context_menuYourIdentities(self, point):
         currentItem = self.getCurrentItem()
-        self.popMenuYourIdentities = QtGui.QMenu(self)
+        popMenuYourIdentities = QtGui.QMenu(self)
         if isinstance(currentItem, Ui_AddressWidget):
-            self.popMenuYourIdentities.addAction(self.actionNewYourIdentities)
-            self.popMenuYourIdentities.addSeparator()
-            self.popMenuYourIdentities.addAction(self.actionClipboardYourIdentities)
-            self.popMenuYourIdentities.addSeparator()
+            popMenuYourIdentities.addAction(self.actionNewYourIdentities)
+            popMenuYourIdentities.addSeparator()
+            popMenuYourIdentities.addAction(self.actionClipboardYourIdentities)
+            popMenuYourIdentities.addSeparator()
             if currentItem.isEnabled:
-                self.popMenuYourIdentities.addAction(self.actionDisableYourIdentities)
+                popMenuYourIdentities.addAction(self.actionDisableYourIdentities)
             else:
-                self.popMenuYourIdentities.addAction(self.actionEnableYourIdentities)
-            self.popMenuYourIdentities.addAction(self.actionSetAvatarYourIdentities)
-            self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
-            self.popMenuYourIdentities.addAction(self.actionEmailGateway)
-            self.popMenuYourIdentities.addSeparator()
+                popMenuYourIdentities.addAction(self.actionEnableYourIdentities)
+            popMenuYourIdentities.addAction(self.actionSetAvatarYourIdentities)
+            popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
+            popMenuYourIdentities.addAction(self.actionEmailGateway)
+            popMenuYourIdentities.addSeparator()
             if currentItem.type != AccountMixin.ALL:
                 self._contact_selected = currentItem
                 # preloaded gui.menu plugins with prefix 'address'
                 for plugin in self.menu_plugins['address']:
-                    self.popMenuYourIdentities.addAction(plugin)
-            self.popMenuYourIdentities.addSeparator()
+                    popMenuYourIdentities.addAction(plugin)
+            popMenuYourIdentities.addSeparator()
         if self.getCurrentFolder() != 'sent':
-            self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
-        if self.popMenuYourIdentities.isEmpty():
+            popMenuYourIdentities.addAction(self.actionMarkAllRead)
+        if popMenuYourIdentities.isEmpty():
             return
-        self.popMenuYourIdentities.exec_(
+        popMenuYourIdentities.exec_(
             self.ui.treeWidgetYourIdentities.mapToGlobal(point))
 
     # TODO make one popMenu
     def on_context_menuChan(self, point):
         currentItem = self.getCurrentItem()
-        self.popMenu = QtGui.QMenu(self)
+        popMenu = QtGui.QMenu(self)
         if isinstance(currentItem, Ui_AddressWidget):
-            self.popMenu.addAction(self.actionNew)
-            self.popMenu.addAction(self.actionDelete)
-            self.popMenu.addSeparator()
+            popMenu.addAction(self.actionNew)
+            popMenu.addAction(self.actionDelete)
+            popMenu.addSeparator()
             if currentItem.isEnabled:
-                self.popMenu.addAction(self.actionDisable)
+                popMenu.addAction(self.actionDisable)
             else:
-                self.popMenu.addAction(self.actionEnable)
-            self.popMenu.addAction(self.actionSetAvatar)
-            self.popMenu.addSeparator()
-            self.popMenu.addAction(self.actionClipboard)
-            self.popMenu.addAction(self.actionSend)
-            self.popMenu.addSeparator()
+                popMenu.addAction(self.actionEnable)
+            popMenu.addAction(self.actionSetAvatar)
+            popMenu.addSeparator()
+            popMenu.addAction(self.actionClipboard)
+            popMenu.addAction(self.actionSend)
+            popMenu.addSeparator()
             self._contact_selected = currentItem
             # preloaded gui.menu plugins with prefix 'address'
             for plugin in self.menu_plugins['address']:
-                self.popMenu.addAction(plugin)
-            self.popMenu.addSeparator()
+                popMenu.addAction(plugin)
+            popMenu.addSeparator()
         if self.getCurrentFolder() != 'sent':
-            self.popMenu.addAction(self.actionMarkAllRead)
-        if self.popMenu.isEmpty():
+            popMenu.addAction(self.actionMarkAllRead)
+        if popMenu.isEmpty():
             return
-        self.popMenu.exec_(
+        popMenu.exec_(
             self.ui.treeWidgetChans.mapToGlobal(point))
 
     def on_context_menuInbox(self, point):
@@ -3988,50 +3981,51 @@ class MyForm(settingsmixin.SMainWindow):
             self.on_context_menuSent(point)
             return
 
-        self.popMenuInbox = QtGui.QMenu(self)
-        self.popMenuInbox.addAction(self.actionForceHtml)
-        self.popMenuInbox.addAction(self.actionMarkUnread)
-        self.popMenuInbox.addSeparator()
+        popMenuInbox = QtGui.QMenu(self)
+        popMenuInbox.addAction(self.actionForceHtml)
+        popMenuInbox.addAction(self.actionMarkUnread)
+        popMenuInbox.addSeparator()
         currentRow = tableWidget.currentRow()
         account = accountClass(
             tableWidget.item(currentRow, 0).data(QtCore.Qt.UserRole))
 
         if account.type == AccountMixin.CHAN:
-            self.popMenuInbox.addAction(self.actionReplyChan)
-        self.popMenuInbox.addAction(self.actionReply)
-        self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
-        self.actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
+            popMenuInbox.addAction(self.actionReplyChan)
+        popMenuInbox.addAction(self.actionReply)
+        popMenuInbox.addAction(self.actionAddSenderToAddressBook)
+        # pylint: disable=no-member
+        actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
             _translate("MainWindow", "Copy subject to clipboard")
             if tableWidget.currentColumn() == 2 else
             _translate("MainWindow", "Copy address to clipboard"),
             self.on_action_ClipboardMessagelist)
-        self.popMenuInbox.addAction(self.actionClipboardMessagelist)
+        popMenuInbox.addAction(actionClipboardMessagelist)
         # pylint: disable=no-member
         self._contact_selected = tableWidget.item(currentRow, 1)
         # preloaded gui.menu plugins with prefix 'address'
         for plugin in self.menu_plugins['address']:
-            self.popMenuInbox.addAction(plugin)
-        self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction(self.actionAddSenderToBlackList)
-        self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction(self.actionSaveMessageAs)
+            popMenuInbox.addAction(plugin)
+        popMenuInbox.addSeparator()
+        popMenuInbox.addAction(self.actionAddSenderToBlackList)
+        popMenuInbox.addSeparator()
+        popMenuInbox.addAction(self.actionSaveMessageAs)
         if currentFolder == "trash":
-            self.popMenuInbox.addAction(self.actionUndeleteTrashedMessage)
+            popMenuInbox.addAction(self.actionUndeleteTrashedMessage)
         else:
-            self.popMenuInbox.addAction(self.actionTrashInboxMessage)
-        self.popMenuInbox.exec_(tableWidget.mapToGlobal(point))
+            popMenuInbox.addAction(self.actionTrashInboxMessage)
+        popMenuInbox.exec_(tableWidget.mapToGlobal(point))
 
     def on_context_menuSent(self, point):
         currentRow = self.ui.tableWidgetInbox.currentRow()
-        self.popMenuSent = QtGui.QMenu(self)
-        self.popMenuSent.addAction(self.actionSentClipboard)
+        popMenuSent = QtGui.QMenu(self)
+        popMenuSent.addAction(self.actionSentClipboard)
         self._contact_selected = self.ui.tableWidgetInbox.item(currentRow, 0)
         # preloaded gui.menu plugins with prefix 'address'
         for plugin in self.menu_plugins['address']:
-            self.popMenuSent.addAction(plugin)
-        self.popMenuSent.addSeparator()
-        self.popMenuSent.addAction(self.actionTrashSentMessage)
-        self.popMenuSent.addAction(self.actionSentReply)
+            popMenuSent.addAction(plugin)
+        popMenuSent.addSeparator()
+        popMenuSent.addAction(self.actionTrashSentMessage)
+        popMenuSent.addAction(self.actionSentReply)
 
         # Check to see if this item is toodifficult and display an additional
         # menu option (Force Send) if it is.
@@ -4041,9 +4035,9 @@ class MyForm(settingsmixin.SMainWindow):
             for row in queryreturn:
                 status, = row
             if status == 'toodifficult':
-                self.popMenuSent.addAction(self.actionForceSend)
+                popMenuSent.addAction(self.actionForceSend)
 
-        self.popMenuSent.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
+        popMenuSent.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
 
     def inboxSearchLineEditUpdated(self, text):
         # dynamic search for too short text is slow
@@ -4147,6 +4141,7 @@ class MyForm(settingsmixin.SMainWindow):
         except NameError:
             message = ""
         except IndexError:
+            # pylint: disable=redefined-variable-type
             message = _translate(
                 "MainWindow",
                 "Error occurred: could not load message from disk."
@@ -4174,9 +4169,10 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()
         completerList = self.ui.lineEditTo.completer().model().stringList()
-        for i in range(len(completerList)):
-            if text_type(completerList[i]).endswith(" <" + item.address + ">"):
-                completerList[i] = item.label + " <" + item.address + ">"
+        for index_, string_ in enumerate(completerList):
+            if text_type(string_).endswith(" <" + item.address + ">"):
+                completerList[index_] = item.label + " <" \
+                    + item.address + ">"
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 
     def tabWidgetCurrentChanged(self, n):
@@ -4229,7 +4225,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def initSettings(self):
         self.loadSettings()
-        for attr, obj in iteritems(self.ui.__dict__):
+        for _, obj in iteritems(self.ui.__dict__):
             if hasattr(obj, "__class__") and \
                     isinstance(obj, settingsmixin.SettingsMixin):
                 loadMethod = getattr(obj, "loadSettings", None)
@@ -4251,7 +4247,7 @@ class BitmessageQtApplication(QtGui.QApplication):
     """
 
     # Unique identifier for this application
-    uuid = '6ec0149b-96e1-4be1-93ab-1465fb3ebf7c'
+    UUID = '6ec0149b-96e1-4be1-93ab-1465fb3ebf7c'
 
     @staticmethod
     def get_windowstyle():
@@ -4263,7 +4259,6 @@ class BitmessageQtApplication(QtGui.QApplication):
 
     def __init__(self, *argv):
         super(BitmessageQtApplication, self).__init__(*argv)
-        id = BitmessageQtApplication.uuid
 
         QtCore.QCoreApplication.setOrganizationName("PyBitmessage")
         QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
@@ -4281,14 +4276,14 @@ class BitmessageQtApplication(QtGui.QApplication):
         self.is_running = False
 
         socket = QLocalSocket()
-        socket.connectToServer(id)
+        socket.connectToServer(self.UUID)
         self.is_running = socket.waitForConnected()
 
         # Cleanup past crashed servers
         if not self.is_running:
             if socket.error() == QLocalSocket.ConnectionRefusedError:
                 socket.disconnectFromServer()
-                QLocalServer.removeServer(id)
+                QLocalServer.removeServer(self.UUID)
 
         socket.abort()
 
@@ -4300,7 +4295,7 @@ class BitmessageQtApplication(QtGui.QApplication):
             # Nope, create a local server with this id and assign on_new_connection
             # for whenever a second instance tries to run focus the application.
             self.server = QLocalServer()
-            self.server.listen(id)
+            self.server.listen(self.UUID)
             self.server.newConnection.connect(self.on_new_connection)
 
         self.setStyleSheet("QStatusBar::item { border: 0px solid black }")
@@ -4309,33 +4304,27 @@ class BitmessageQtApplication(QtGui.QApplication):
         if self.server:
             self.server.close()
 
-    def on_new_connection(self):
+    def on_new_connection(self):  # pylint: disable=no-self-use
         if myapp:
             myapp.appIndicatorShow()
 
 
 def init():
-    global app
+    global app  # pylint: disable=global-statement
     if not app:
         app = BitmessageQtApplication(sys.argv)
     return app
 
 
 def run():
-    global myapp
-    app = init()
-    myapp = MyForm()
+    global myapp  # pylint: disable=global-statement
+    _app = init()
+    myapp = MyForm()  # pylint: disable=redefined-outer-name
 
     myapp.appIndicatorInit(app)
 
-    if myapp._firstrun:
+    if myapp._firstrun:  # pylint: disable=protected-access
         myapp.showConnectDialog()  # ask the user if we may connect
-
-#    try:
-#        if config.get('bitmessagesettings', 'mailchuck') < 1:
-#            myapp.showMigrationWizard(config.get('bitmessagesettings', 'mailchuck'))
-#    except:
-#        myapp.showMigrationWizard(0)
 
     # only show after wizards and connect dialogs have completed
     if not config.getboolean('bitmessagesettings', 'startintray'):
@@ -4343,4 +4332,4 @@ def run():
         QtCore.QTimer.singleShot(
             30000, lambda: myapp.setStatusIcon(state.statusIconColor))
 
-    app.exec_()
+    _app.exec_()

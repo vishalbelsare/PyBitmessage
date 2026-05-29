@@ -3,6 +3,7 @@ Thread for performing PoW
 """
 # pylint: disable=protected-access,too-many-branches,too-many-statements
 # pylint: disable=no-self-use,too-many-lines,too-many-locals
+# pylint: disable=import-error,redefined-builtin
 
 from __future__ import division
 
@@ -221,9 +222,9 @@ class singleWorker(StoppableThread):
 
     @classmethod
     def _doPOWDefaults(
-        cls, payload, TTL,
-        nonceTrialsPerByte=None, payloadLengthExtraBytes=None,
-        log_prefix='', log_time=False
+            cls, payload, TTL,
+            nonceTrialsPerByte=None, payloadLengthExtraBytes=None,
+            log_prefix='', log_time=False
     ):
         if not nonceTrialsPerByte:
             nonceTrialsPerByte = \
@@ -491,7 +492,7 @@ class singleWorker(StoppableThread):
     def sendOnionPeerObj(self, peer=None):
         """Send onionpeer object representing peer"""
         if not peer:  # find own onionhostname
-            for peer in state.ownAddresses:
+            for peer in state.ownAddresses:  # pylint: disable=redefined-argument-from-local
                 if peer.host.endswith('.onion'):
                     break
             else:
@@ -755,9 +756,9 @@ class singleWorker(StoppableThread):
             # in our keys.dat file.
             elif config.has_section(toaddress):
                 if not sqlExecute(
-                    '''UPDATE sent SET status='doingmsgpow' '''
-                    ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
-                    toaddress
+                        '''UPDATE sent SET status='doingmsgpow' '''
+                        ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
+                        toaddress
                 ):
                     continue
                 status = 'doingmsgpow'
@@ -771,9 +772,9 @@ class singleWorker(StoppableThread):
                 if queryreturn != []:
                     # set the status of this msg to doingmsgpow
                     if not sqlExecute(
-                        '''UPDATE sent SET status='doingmsgpow' '''
-                        ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
-                        toaddress
+                            '''UPDATE sent SET status='doingmsgpow' '''
+                            ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
+                            toaddress
                     ):
                         continue
                     status = 'doingmsgpow'
@@ -1398,7 +1399,7 @@ class singleWorker(StoppableThread):
         TTL = 2.5 * 24 * 60 * 60
         TTL *= 2 ** retryNumber
         if TTL > 28 * 24 * 60 * 60:
-            TTL = 28 * 24 * 60 * 60
+            TTL = float(28 * 24 * 60 * 60)
         # add some randomness to the TTL
         TTL = TTL + helper_random.randomrandrange(-300, 300)
         embeddedTime = int(time.time() + TTL)

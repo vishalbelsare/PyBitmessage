@@ -9,7 +9,7 @@ needed openssl functionality in class _OpenSSL.
 import ctypes
 import sys
 
-# pylint: disable=protected-access
+# pylint: disable=no-member,protected-access
 
 OpenSSL = None
 
@@ -786,6 +786,7 @@ def loadOpenSSL():
         elif 'win32' in sys.platform or 'win64' in sys.platform:
             libdir.append(path.join(sys._MEIPASS, 'libeay32.dll'))
         else:
+            # pylint: disable=no-member
             libdir.extend([
                 path.join(sys._MEIPASS, 'libcrypto.so'),
                 path.join(sys._MEIPASS, 'libssl.so'),

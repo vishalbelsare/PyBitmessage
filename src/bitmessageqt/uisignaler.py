@@ -1,5 +1,5 @@
 
-from PyQt4.QtCore import QThread, SIGNAL
+from PyQt4.QtCore import QThread, SIGNAL  # pylint: disable=import-error
 import sys
 
 import queues
@@ -17,6 +17,7 @@ class UISignaler(QThread):
             cls._instance = UISignaler()
         return cls._instance
 
+    # pylint: disable=too-many-branches
     def run(self):
         while True:
             command, data = queues.UISignalQueue.get()

@@ -4,6 +4,7 @@ processes the network objects
 """
 # pylint: disable=too-many-locals,too-many-return-statements
 # pylint: disable=too-many-branches,too-many-statements
+# pylint: disable=too-many-lines
 import hashlib
 import logging
 import os
@@ -140,15 +141,19 @@ class objectProcessor(threading.Thread):
         # bypass nonce and time, retain object type/version/stream + body
         readPosition = 16
 
-        if data[readPosition:] in state.ackdataForWhichImWatching:
+        # data may be a memoryview, which is not hashable and thus
+        # cannot be used as a dictionary key; convert the slice to bytes.
+        ackcheckdata = bytes(data[readPosition:])
+
+        if ackcheckdata in state.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del state.ackdataForWhichImWatching[data[readPosition:]]
+            del state.ackdataForWhichImWatching[ackcheckdata]
             sqlExecute(
                 "UPDATE sent SET status='ackreceived', lastactiontime=?"
-                " WHERE ackdata=?", int(time.time()), data[readPosition:])
+                " WHERE ackdata=?", int(time.time()), ackcheckdata)
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata', (
-                    data[readPosition:],
+                    ackcheckdata,
                     _translate(
                         "MainWindow",
                         "Acknowledgement of the message received %1"
@@ -207,7 +212,9 @@ class objectProcessor(threading.Thread):
 
         myAddress = ''
         if requestedAddressVersionNumber <= 3:
-            requestedHash = data[readPosition:readPosition + 20]
+            # data may be a memoryview; convert slices to bytes so they
+            # are hashable and can be used as dictionary keys.
+            requestedHash = bytes(data[readPosition:readPosition + 20])
             if len(requestedHash) != 20:
                 return logger.debug(
                     'The length of the requested hash is not 20 bytes.'
@@ -219,7 +226,8 @@ class objectProcessor(threading.Thread):
             if requestedHash in shared.myAddressesByHash:
                 myAddress = shared.myAddressesByHash[requestedHash]
         elif requestedAddressVersionNumber >= 4:
-            requestedTag = data[readPosition:readPosition + 32]
+            # data may be a memoryview; convert to bytes for hashability.
+            requestedTag = bytes(data[readPosition:readPosition + 32])
             if len(requestedTag) != 32:
                 return logger.debug(
                     'The length of the requested tag is not 32 bytes.'
@@ -412,7 +420,8 @@ class objectProcessor(threading.Thread):
                     '(within processpubkey) payloadLength less than 350.'
                     ' Sanity check failed.')
 
-            tag = data[readPosition:readPosition + 32]
+            # data may be a memoryview; convert to bytes for hashability.
+            tag = bytes(data[readPosition:readPosition + 32])
             if tag not in state.neededPubkeys:
                 return logger.info(
                     'We don\'t need this v4 pubkey. We didn\'t ask for it.')
@@ -718,10 +727,10 @@ class objectProcessor(threading.Thread):
         # Don't send ACK if invalid, blacklisted senders, invisible
         # messages, disabled or chan
         if (
-            self.ackDataHasAValidHeader(ackData) and not blockMessage
-            and messageEncodingType != 0
-            and not config.safeGetBoolean(toAddress, 'dontsendack')
-            and not config.safeGetBoolean(toAddress, 'chan')
+                self.ackDataHasAValidHeader(ackData) and not blockMessage
+                and messageEncodingType != 0
+                and not config.safeGetBoolean(toAddress, 'dontsendack')
+                and not config.safeGetBoolean(toAddress, 'chan')
         ):
             ackPayload = ackData[24:]
             objectType, toStreamNumber, expiresTime = \
@@ -806,7 +815,8 @@ class objectProcessor(threading.Thread):
                     ' v4 broadcast: %s seconds.',
                     time.time() - messageProcessingStartTime)
         elif broadcastVersion == 5:
-            embeddedTag = data[readPosition:readPosition + 32]
+            # data may be a memoryview; convert to bytes for hashability.
+            embeddedTag = bytes(data[readPosition:readPosition + 32])
             readPosition += 32
             if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
                 logger.debug('We\'re not interested in this broadcast.')

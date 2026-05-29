@@ -6,7 +6,7 @@ import ssl
 import sys
 import time
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore  # pylint: disable=import-error
 
 import account
 import defaults
@@ -133,6 +133,7 @@ def createSupportMessage(myapp):
     architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
     pythonversion = sys.version
 
+    # pylint: disable=protected-access
     opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (
         ssl.OPENSSL_VERSION, OpenSSL._version)
 
@@ -140,7 +141,7 @@ def createSupportMessage(myapp):
     if paths.frozen:
         frozen = paths.frozen
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
-    cpow = "True" if proofofwork.bmpow else "False"
+    cpow = "True" if proofofwork.BMPOW else "False"
     openclpow = str(
         config.safeGet('bitmessagesettings', 'opencl')
     ) if openclEnabled() else "None"

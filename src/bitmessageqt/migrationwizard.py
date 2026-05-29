@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-from PyQt4 import QtGui
+from PyQt4 import QtGui  # pylint: disable=import-error
 
 
 class MigrationWizardIntroPage(QtGui.QWizardPage):
@@ -16,12 +16,12 @@ class MigrationWizardIntroPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
 
-    def nextId(self):
+    def nextId(self):  # pylint: disable=no-self-use
         return 1
 
 
 class MigrationWizardAddressesPage(QtGui.QWizardPage):
-    def __init__(self, addresses):
+    def __init__(self, addresses):  # pylint: disable=unused-argument
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Addresses")
 
@@ -32,7 +32,7 @@ class MigrationWizardAddressesPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
 
-    def nextId(self):
+    def nextId(self):  # pylint: disable=no-self-use
         return 10
 
 
@@ -48,7 +48,7 @@ class MigrationWizardGPUPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
 
-    def nextId(self):
+    def nextId(self):  # pylint: disable=no-self-use
         return 10
 
 
@@ -66,6 +66,7 @@ class MigrationWizardConclusionPage(QtGui.QWizardPage):
 
 
 class Ui_MigrationWizard(QtGui.QWizard):
+    # pylint: disable=redefined-variable-type
     def __init__(self, addresses):
         super(QtGui.QWizard, self).__init__()
 
